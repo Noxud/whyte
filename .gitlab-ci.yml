@@ -30,7 +30,7 @@ before_script:
   - pip3 install pipenv
 
 # Installing all dependencies and caching them
-Build:
+build:
   stage: Build
   script:
     - pipenv sync --dev
@@ -41,7 +41,7 @@ Build:
     policy: pull-push
 
 # Check code style
-Flake8:
+flake8:
   stage: Static Analysis
   # Continue the pipeline even if flake8 failed
   allow_failure: true
@@ -49,31 +49,31 @@ Flake8:
     - pipenv run flake8 "src/" --doctests --config "config_checks/.flake8"
 
 # Run MyPy for Windows; Linux; MacOS; FreeBSD
-MyPy Windows:
+mypy-windows:
   stage: Static Analysis
   allow_failure: false
   script:
     - pipenv run mypy "src/" --platform win32 --config-file "config_checks/.mypy"
 
-MyPy Linux:
+mypy-linux:
   stage: Static Analysis
   allow_failure: false
   script:
     - pipenv run mypy "src/" --platform linux --config-file "config_checks/.mypy"
 
-MyPy MacOS:
+mypy-macos:
   stage: Static Analysis
   allow_failure: false
   script:
     - pipenv run mypy "src/" --platform darwin --config-file "config_checks/.mypy"
 
-MyPy FreeBSD:
+mypy-freebsd:
   stage: Static Analysis
   allow_failure: false
   script:
     - pipenv run mypy "src/" --platform freebsd --config-file "config_checks/.mypy"
 
-Test:
+test:
   stage: Test
   script:
     # Run noseTests and doctests
@@ -91,11 +91,11 @@ Test:
       - htmlcov/
 
 # Deploy coverage report to pages
-Pages:
+pages:
   stage: Deploy
   # Run when tests finished
   needs:
-    - Test
+    - test
   # Escape before_script using echo
   before_script:
     - echo "Deploying HTML coverage report"
