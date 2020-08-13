@@ -92,6 +92,8 @@ test:
 
 # Deploy coverage report to pages
 pages:
+  image: alpine:latest
+  cache: {}
   stage: Deploy
   # Run when tests finished
   needs:
