@@ -1,0 +1,112 @@
+image: python:3.8
+
+stages:
+  - Build
+  - Static Analysis
+  - Test
+  - Deploy
+
+
+# ENV variables
+variables:
+  # Define PipEnv venv path
+  WORKON_HOME: .pipenv/venvs
+  # Define PipEnv cache path
+  PIPENV_CACHE_DIR: .pipenv/pipcache
+
+# Global cache
+cache: &global-cache
+  # Make cache individual for every branch
+  key: ${CI_COMMIT_REF_SLUG}
+  # Paths to cache
+  paths:
+    - .pipenv
+  # Only pull cache
+  policy: pull
+
+# Run before every script
+before_script:
+  - pip3 install --upgrade pip
+  - pip3 install pipenv
+  - cp $ENV_FILE trailersplus/trailersplus/settings/.env
+
+# Installing all dependencies and caching them
+Build:
+  stage: Build
+  script:
+    - pipenv sync --dev
+  # Override the global cache
+  cache:
+    <<: *global-cache
+    # Add push policy to save result
+    policy: pull-push
+
+# Check code style
+Flake8:
+  stage: Static Analysis
+  # Continue the pipeline even if flake8 failed
+  allow_failure: true
+  script:
+    - pipenv run flake8 "src/" --doctests --config "config_checks/.flake8"
+
+# Run MyPy for Windows; Linux; MacOS; FreeBSD
+MyPy Windows:
+  stage: Static Analysis
+  allow_failure: false
+  script:
+    - pipenv run mypy "src/" --platform win32 --config-file "config_checks/.mypy"
+
+MyPy Linux:
+  stage: Static Analysis
+  allow_failure: false
+  script:
+    - pipenv run mypy "src/" --platform linux --config-file "config_checks/.mypy"
+
+MyPy MacOS:
+  stage: Static Analysis
+  allow_failure: false
+  script:
+    - pipenv run mypy "src/" --platform darwin --config-file "config_checks/.mypy"
+
+MyPy FreeBSD:
+  stage: Static Analysis
+  allow_failure: false
+  script:
+    - pipenv run mypy "src/" --platform freebsd --config-file "config_checks/.mypy"
+
+Test:
+  stage: Test
+  script:
+    # Run noseTests and doctests
+    - pipenv run coverage run --rcfile="config_checks/.coveragerc" --source="src/" -m nose2 --plugin  nose2.plugins.doctests --with-doctest
+    # Generate html report for gitlab pages
+    - pipenv run coverage html
+    # Show console report
+    - pipenv run coverage report
+
+  # RegEx to find coverage percentage
+  coverage: '/^TOTAL.+?(\d+\%)$/'
+  # Save HTML coverage folder
+  artifacts:
+    paths:
+      - htmlcov/
+
+# Deploy coverage report to pages
+Pages:
+  stage: Deploy
+  # Run when tests finished
+  needs:
+    - Test
+  # Escape before_script using echo
+  before_script:
+    - echo "Deploying HTML coverage report"
+  # Move coverage directory to public
+  script:
+    - mv htmlcov/ public/
+  artifacts:
+    paths:
+      - public/
+    # Delete pages in 30 days
+    expire_in: 30 days
+  only:
+    - master

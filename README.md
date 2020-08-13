@@ -1,3 +1,3 @@
-# Django Interactive Template Engine
+# Web-Template Engine
 
-CLI to install django projects with third-party apps
+CLI to preconfigure django projects
