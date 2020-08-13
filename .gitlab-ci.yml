@@ -28,7 +28,6 @@ cache: &global-cache
 before_script:
   - pip3 install --upgrade pip
   - pip3 install pipenv
-  - cp $ENV_FILE trailersplus/trailersplus/settings/.env
 
 # Installing all dependencies and caching them
 Build:
